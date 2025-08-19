@@ -2,11 +2,11 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: parksapp-demo  # <-- CHANGE THIS
-  namespace: argocd # <-- NEVER CHANGE
+  namespace: openshift-gitops # <-- NEVER CHANGE
 spec:
   project: default
   source:
-    repoURL: git@github.com:arslankhanali/Openshift-101.git
+    repoURL: https://github.com/arslankhanali/Openshift-101
     path: apps  # <-- CHANGE THIS
     targetRevision: HEAD
   destination:
