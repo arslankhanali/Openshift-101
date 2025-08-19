@@ -1,0 +1,65 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: parksmap
+  labels:
+    app: workshop
+    component: parksmap
+    role: frontend
+spec:
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+  selector:
+    app: workshop
+    component: parksmap
+    role: frontend
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: parksmap
+  labels:
+    app: workshop
+    component: parksmap
+    role: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: workshop
+      component: parksmap
+      role: frontend
+  template:
+    metadata:
+      labels:
+        app: workshop
+        component: parksmap
+        role: frontend
+    spec:
+      containers:
+        - name: parksmap
+          image: quay.io/arslankhanali/parksmap:frontend
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: parksmap
+  labels:
+    app: workshop
+    component: parksmap
+    role: frontend
+spec:
+  to:
+    kind: Service
+    name: parksmap
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+  wildcardPolicy: None

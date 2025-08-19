@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: parksapp-demo  # <-- CHANGE THIS
+  namespace: argocd # <-- NEVER CHANGE
+spec:
+  project: default
+  source:
+    repoURL: git@github.com:arslankhanali/Openshift-101.git
+    path: apps  # <-- CHANGE THIS
+    targetRevision: HEAD
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: demo2  # <-- CHANGE THIS
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

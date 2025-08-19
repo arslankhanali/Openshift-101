@@ -1,0 +1,101 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nationalparks
+  labels:
+    app: workshop
+    component: nationalparks
+    role: backend
+spec:
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+    - name: https
+      port: 8443
+      targetPort: 8443
+    - name: jolokia
+      port: 8778
+      targetPort: 8778
+  selector:
+    app: nationalparks
+    component: nationalparks
+    role: backend
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nationalparks
+  labels:
+    app: workshop
+    component: nationalparks
+    role: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nationalparks
+      component: nationalparks
+      role: backend
+  template:
+    metadata:
+      labels:
+        app: nationalparks
+        component: nationalparks
+        role: backend
+    spec:
+      containers:
+        - name: nationalparks
+          image: quay.io/arslankhanali/parksmap:backend
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+            - containerPort: 8443
+            - containerPort: 8778
+          env:
+            - name: MONGODB_SERVER_HOST
+              value: mongodb
+            - name: MONGODB_DATABASE
+              value: parksapp
+            - name: MONGODB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-credentials
+                  key: app-usr
+            - name: MONGODB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-credentials
+                  key: app-pwd
+          livenessProbe:
+            httpGet:
+              path: /ws/healthz/
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /ws/healthz/
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: nationalparks
+  labels:
+    app: workshop
+    component: nationalparks
+    role: backend
+    type: parksmap-backend
+spec:
+  to:
+    kind: Service
+    name: nationalparks
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+  wildcardPolicy: None

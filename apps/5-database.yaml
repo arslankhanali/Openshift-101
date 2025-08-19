@@ -1,0 +1,68 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongodb
+  labels:
+    app: workshop
+    component: nationalparks
+    role: database
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongodb
+      component: nationalparks
+      role: database
+  template:
+    metadata:
+      labels:
+        app: mongodb
+        component: nationalparks
+        role: database
+    spec:
+      containers:
+        - name: mongodb
+          image: quay.io/arslankhanali/parksmap:db
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 27017
+              protocol: TCP
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-credentials
+                  key: admin-usr
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-credentials
+                  key: admin-pwd
+          volumeMounts:
+            - name: mongodb-config
+              mountPath: /data/configdb
+            - name: mongodb-data
+              mountPath: /data/db
+      volumes:
+        - name: mongodb-config
+        - name: mongodb-data
+---
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb
+  labels:
+    app: workshop
+    component: nationalparks
+    role: database
+spec:
+  ports:
+    - name: mongo
+      port: 27017
+      targetPort: 27017
+  selector:
+    app: mongodb
+    component: nationalparks
+    role: database
