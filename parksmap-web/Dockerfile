@@ -1,9 +1,9 @@
-FROM registry.redhat.io/ubi8/openjdk-11 AS builder
+FROM registry.access.redhat.com/ubi8/openjdk-11 AS builder
 WORKDIR /opt/app
 COPY . .
 RUN /usr/bin/mvn clean package
 
-FROM registry.redhat.io/ubi8/openjdk-11
+FROM registry.access.redhat.com/ubi8/openjdk-11
 COPY --from=builder /opt/app/target/parksmap-web.jar /parksmap.jar
 CMD ["java", "-jar", "/parksmap.jar"]
 EXPOSE 8080
