@@ -1,0 +1,137 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-parksmap
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: parksmap
+spec:
+  params:
+  - name: APP_NAME
+    type: string
+    default: parksmap
+  - name: APP_GIT_URL
+    type: string
+    default: https://github.com/arslankhanali/Openshift-101
+  - name: APP_GIT_REVISION
+    type: string
+    default: main
+  - name: DOCKERFILE_PATH
+    type: string
+    default: parksmap-web/Dockerfile
+  - name: CONTEXT
+    type: string
+    default: parksmap-web
+  workspaces:
+  - name: workspace
+  - name: maven-settings
+  tasks:
+  - name: git-clone
+    taskRef:
+      kind: Task
+      name: git-clone
+    workspaces:
+    - name: output
+      workspace: workspace
+    params:
+    - name: url
+      value: $(params.APP_GIT_URL)
+    - name: revision
+      value: $(params.APP_GIT_REVISION)
+    - name: depth
+      value: "1"
+    - name: submodules
+      value: "true"
+
+  - name: maven
+    runAfter:
+    - git-clone
+    taskRef:
+      kind: Task
+      name: maven
+    workspaces:
+    - name: source
+      workspace: workspace
+    - name: maven-settings
+      workspace: maven-settings
+    params:
+    - name: MAVEN_IMAGE
+      value: registry.redhat.io/ubi8/openjdk-11:latest
+    - name: GOALS
+      value:
+      - package
+    - name: CONTEXT_DIR
+      value: $(params.CONTEXT)
+
+  - name: buildah
+    runAfter:
+    - maven
+    taskRef:
+      kind: Task
+      name: buildah
+    workspaces:
+    - name: source
+      workspace: workspace
+    params:
+    - name: IMAGE
+      value: image-registry.openshift-image-registry.svc:5000/$(context.pipelineRun.namespace)/$(params.APP_NAME):latest
+    - name: DOCKERFILE
+      value: $(params.DOCKERFILE_PATH)
+    - name: CONTEXT
+      value: $(params.CONTEXT)
+    - name: TLSVERIFY
+      value: "true"
+
+  - name: openshift-client
+    runAfter:
+    - buildah
+    taskRef:
+      kind: Task
+      name: openshift-client
+    params:
+    - name: SCRIPT
+      value: |
+        #!/bin/sh
+        set -e
+        oc new-app \
+          --name=$(params.APP_NAME) \
+          image-registry.openshift-image-registry.svc:5000/$(context.pipelineRun.namespace)/$(params.APP_NAME):latest \
+          --allow-missing-images \
+          -n $(context.pipelineRun.namespace)
+---
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  name: parksmap-run
+spec:
+  pipelineRef:
+    name: parksmap
+  taskRunTemplate:
+    serviceAccountName: pipeline
+  params:
+  - name: APP_NAME
+    value: parksmap
+  - name: APP_GIT_URL
+    value: https://github.com/arslankhanali/Openshift-101
+  - name: APP_GIT_REVISION
+    value: main
+  - name: DOCKERFILE_PATH
+    value: parksmap-web/Dockerfile
+  - name: CONTEXT
+    value: parksmap-web
+  timeouts:
+    pipeline: 1h0m0s
+  workspaces:
+  - name: workspace
+    persistentVolumeClaim:
+      claimName: pvc-parksmap
+  - name: maven-settings
+    emptyDir: {}

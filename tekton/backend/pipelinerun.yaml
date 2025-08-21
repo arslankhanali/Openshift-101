@@ -1,0 +1,28 @@
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  name: new-pipeline-run
+spec:
+  pipelineRef:
+    name: new-pipeline
+  taskRunTemplate:
+    serviceAccountName: pipeline
+  params:
+  - name: APP_NAME
+    value: nationalparks
+  - name: APP_GIT_URL
+    value: https://github.com/arslankhanali/Openshift-101
+  - name: APP_GIT_REVISION
+    value: main
+  - name: DOCKERFILE_PATH
+    value: nationalparks/Dockerfile
+  - name: CONTEXT
+    value: nationalparks
+  timeouts:
+    pipeline: 1h0m0s
+  workspaces:
+  - name: workspace
+    persistentVolumeClaim:
+      claimName: app-source-pvc
+  - name: maven-settings
+    emptyDir: {}
