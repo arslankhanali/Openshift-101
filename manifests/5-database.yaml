@@ -48,7 +48,6 @@ spec:
         - name: mongodb-config
         - name: mongodb-data
 ---
----
 apiVersion: v1
 kind: Service
 metadata:

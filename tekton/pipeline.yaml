@@ -1,0 +1,96 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: nationalparks-pipeline
+spec:
+  params:
+    - name: APP_NAME
+      type: string
+      default: nationalparks
+    - name: APP_GIT_URL
+      type: string
+      default: https://github.com/openshift-roadshow/nationalparks
+    - name: APP_GIT_REVISION
+      type: string
+      default: master
+  workspaces:
+    - name: app-source
+    - name: maven-settings
+  tasks:
+    - name: git-clone
+      taskRef:
+        kind: Task
+        name: git-clone
+      params:
+        - name: url
+          value: $(params.APP_GIT_URL)
+        - name: revision
+          value: $(params.APP_GIT_REVISION)
+        - name: submodules
+          value: "true"
+        - name: depth
+          value: "1"
+        - name: sslVerify
+          value: "true"
+        - name: deleteExisting
+          value: "true"
+        - name: verbose
+          value: "true"
+      workspaces:
+        - name: output
+          workspace: app-source
+
+    - name: build-and-test
+      runAfter:
+        - git-clone
+      taskRef:
+        kind: Task
+        name: maven
+      params:
+        - name: MAVEN_IMAGE
+          value: maven:3.8.3-openjdk-11
+        - name: GOALS
+          value:
+            - package
+        - name: PROXY_PROTOCOL
+          value: http
+      workspaces:
+        - name: source
+          workspace: app-source
+        - name: maven_settings
+          workspace: maven-settings
+
+    - name: build-image
+      runAfter:
+        - build-and-test
+      taskRef:
+        kind: Task
+        name: buildah
+      params:
+        - name: IMAGE
+          value: image-registry.openshift-image-registry.svc:5000/$(context.pipelineRun.namespace)/$(params.APP_NAME):latest
+        - name: BUILDER_IMAGE
+          value: registry.redhat.io/rhel8/buildah:latest
+        - name: STORAGE_DRIVER
+          value: vfs
+        - name: DOCKERFILE
+          value: ./Dockerfile
+        - name: CONTEXT
+          value: .
+        - name: TLSVERIFY
+          value: "true"
+        - name: FORMAT
+          value: oci
+      workspaces:
+        - name: source
+          workspace: app-source
+
+    - name: redeploy
+      runAfter:
+        - build-image
+      taskRef:
+        kind: Task
+        name: openshift-client
+      params:
+        - name: SCRIPT
+          value: oc rollout restart deployment/$(params.APP_NAME)

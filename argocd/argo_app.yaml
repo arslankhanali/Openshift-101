@@ -1,20 +1,20 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: parksapp-demo  # <-- CHANGE THIS
+  name: parksapp-demo  # <-- CHANGE THIS - ArgoApp name - Appears in Argo UI
   namespace: openshift-gitops # <-- NEVER CHANGE
 spec:
   project: default
   source:
     repoURL: https://github.com/arslankhanali/Openshift-101
-    path: apps  # <-- CHANGE THIS
+    path: manifests  # <-- CHANGE THIS - Path to manifests, inside the github repo
     targetRevision: HEAD
   destination:
     server: https://kubernetes.default.svc
-    namespace: demo2  # <-- CHANGE THIS
+    namespace: demo2  # <-- CHANGE THIS - Namespace to install everything in
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
     syncOptions:
-      - CreateNamespace=true
+      - CreateNamespace=true # <-- Create namespace if it does not exist
