@@ -1,0 +1,38 @@
+apiVersion: ols.openshift.io/v1alpha1
+kind: OLSConfig
+metadata:
+  labels:
+    app.kubernetes.io/created-by: lightspeed-operator
+    app.kubernetes.io/instance: olsconfig-sample
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: olsconfig
+    app.kubernetes.io/part-of: lightspeed-operator
+  name: cluster
+spec:
+  llm:
+    providers:
+    - credentialsSecretRef:
+        name: ai
+      models:
+      - name: llama-3-2-3b
+      name: OpenAI
+      type: openai
+      url: https://llama-3-2-3b-maas-apicast-production.apps.prod.rhoai.rh-aiservices-bu.com:443/v1
+  ols:
+    conversationCache:
+      postgres:
+        credentialsSecret: lightspeed-postgres-secret
+        dbName: postgres
+        maxConnections: 2000
+        sharedBuffers: 256MB
+        user: postgres
+      type: postgres
+    defaultModel: llama-3-2-3b
+    defaultProvider: OpenAI
+    deployment:
+      console:
+        replicas: 1
+      replicas: 1
+    logLevel: INFO
+  olsDataCollector:
+    logLevel: INFO

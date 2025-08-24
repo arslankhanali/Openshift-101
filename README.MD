@@ -1,0 +1,5 @@
+1. [Presentation](https://docs.google.com/presentation/d/1JxAOxTJyOQGHUX0LSp9zqfWaYvsyQNoHJf-M8Uodv58/edit?slide=id.p3#slide=id.p3)
+2. [Instructions](https://rhpds.github.io/ocp4-getting-started-showroom/modules/main/index.html)
+   1. [Github](https://github.com/rhpds/ocp4-getting-started-showroom/tree/main) 
+3. [Frontend-Parksmap](https://github.com/openshift-roadshow/parksmap-web)
+4. [Backend-NationalParks](https://github.com/openshift-roadshow/nationalparks)

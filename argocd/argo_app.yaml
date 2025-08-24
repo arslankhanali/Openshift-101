@@ -11,7 +11,7 @@ spec:
     targetRevision: HEAD
   destination:
     server: https://kubernetes.default.svc
-    namespace: demo2  # <-- CHANGE THIS - Namespace to install everything in
+    namespace: demo-gitops  # <-- CHANGE THIS - Namespace to install everything in
   syncPolicy:
     automated:
       prune: true
